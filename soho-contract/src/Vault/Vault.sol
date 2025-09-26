@@ -10,6 +10,16 @@ import {IERC20} from "./interface/IERC20.sol";
 
 
 contract Vault is ReentrancyGuard , Ownable {
+
+/**Errors  */
+Error Vault_Insufficient_Balance();
+Error Vault_TransferFailed();
+Error Vault_Max-10-percent-fee();
+
+
+
+
+
     // ---State ---
     mapping(address=>mapping(address => uint256)) private balances;
 
@@ -40,12 +50,12 @@ contract Vault is ReentrancyGuard , Ownable {
  */
 
 function deposit(address token , uint256 amount ) external nonReentrancy {
-    require(amount>0,"Amount must be > 0");
+    require(amount>0,Vault_Insufficient_Balance());
 
 
     //Transfer Token from user to Vault
     bool success = IERC20(token).transferFrom(msg.sender,address(this),amount);
-    require(success,"Transfer Failed");
+    require(success,Vault_TransferFailed(););
 
     //Update interal balance
     balances[msg.sender][token]+=amount;
@@ -63,15 +73,15 @@ function deposit(address token , uint256 amount ) external nonReentrancy {
  */
 
     function withdraw(address token, uint256 amount)external nonReentrant{
-        require(amount>0,"Amount must be >0");
-        require(balances[msg.sender][token]>=amount,"Insufficient amount");
+        require(amount>0,Vault_InsufficientBalance());
+        require(balances[msg.sender][token]>=amount,InsufficientBalance());
         // Update internal balance first(prevents reentrancy)
         balances[msg.sender][token]-=amount;
 
 
         //Transfer token back to user
         bool  success=IERC20(token).transfer(msg.sender,amount);
-        require(success"Transfer Failed");
+        require(success,Vault_TransferFailed());
 
         emit Withdraw(msg.sender,token,amount);
     }
@@ -104,7 +114,7 @@ function deposit(address token , uint256 amount ) external nonReentrancy {
  */
 
     function setFeeBasisPoints(uint256 _feeBasisPoints) external onlyOwner{
-    }require(_feeBasisPoints <=1000,"Max 10% fee");
+    }require(_feeBasisPoints <=1000,Vault_Max-10-percent-fee());
     feeBasisPOints=_feeBasisPoints;
 
 }
