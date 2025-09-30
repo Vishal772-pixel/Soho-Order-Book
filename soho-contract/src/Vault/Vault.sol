@@ -21,7 +21,7 @@ Error Vault_Max-10-percent-fee();
 
 
     // ---State ---
-    mapping(address=>mapping(address => uint256)) private balances;
+    mapping(address=>mapping(address => uint256)) public balances;
 
     //balances[user][token]=amount
 
@@ -117,4 +117,19 @@ function deposit(address token , uint256 amount ) external nonReentrancy {
     }require(_feeBasisPoints <=1000,Vault_Max-10-percent-fee());
     feeBasisPOints=_feeBasisPoints;
 
+
+     function _transferTo(address from , address to , address amount , uint256) external onlyOwnable
+     {
+         require(balances[from][token] >= amount, "Vault: insufficient balance");
+        require(to != address(0), "Vault: zero address");
+
+        balances[from][token] -= amount;
+        balances[to][token] += amount
+     }
+
+
+
 }
+
+
+
