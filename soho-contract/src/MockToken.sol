@@ -1,4 +1,4 @@
-//SPDX-License-Identifier:MIT;
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.25;
 
@@ -19,7 +19,7 @@ contract MockToken is ERC20 , Ownable {
 //@notice A ERC20 based token minting 
 //@dev A only Owner based access
 //@params Token would be minted on  given address
-@params Only the required amount of token would be minted
+//@params Only the required amount of token would be minted
     function mint(address to , uint256 amount)  external onlyOwnable{
         _mint(to,amount );
 

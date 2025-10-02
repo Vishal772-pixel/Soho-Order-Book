@@ -12,9 +12,9 @@ import {IERC20} from "./interface/IERC20.sol";
 contract Vault is ReentrancyGuard , Ownable {
 
 /**Errors  */
-Error Vault_Insufficient_Balance();
-Error Vault_TransferFailed();
-Error Vault_Max-10-percent-fee();
+error Vault_InsufficientBalance();
+error Vault_TransferFailed();
+error Vault_Max10PercentFee();
 
 
 
@@ -50,12 +50,12 @@ Error Vault_Max-10-percent-fee();
  */
 
 function deposit(address token , uint256 amount ) external nonReentrancy {
-    require(amount>0,Vault_Insufficient_Balance());
+    require(amount>0,Vault_InsufficientBalance());
 
 
     //Transfer Token from user to Vault
     bool success = IERC20(token).transferFrom(msg.sender,address(this),amount);
-    require(success,Vault_TransferFailed(););
+    require(success,Vault_TransferFailed());
 
     //Update interal balance
     balances[msg.sender][token]+=amount;
@@ -74,7 +74,7 @@ function deposit(address token , uint256 amount ) external nonReentrancy {
 
     function withdraw(address token, uint256 amount)external nonReentrant{
         require(amount>0,Vault_InsufficientBalance());
-        require(balances[msg.sender][token]>=amount,InsufficientBalance());
+        require(balances[msg.sender][token]>=amount,Vault_InsufficientBalance());
         // Update internal balance first(prevents reentrancy)
         balances[msg.sender][token]-=amount;
 
@@ -114,14 +114,14 @@ function deposit(address token , uint256 amount ) external nonReentrancy {
  */
 
     function setFeeBasisPoints(uint256 _feeBasisPoints) external onlyOwner{
-    }require(_feeBasisPoints <=1000,Vault_Max-10-percent-fee());
+    }require(_feeBasisPoints <=1000,Vault_Max10PercentFee());
     feeBasisPOints=_feeBasisPoints;
 
 
      function _transferTo(address from , address to , address amount , uint256) external onlyOwnable
      {
-         require(balances[from][token] >= amount, "Vault: insufficient balance");
-        require(to != address(0), "Vault: zero address");
+         require(balances[from][token] >= amount,Vault_InsufficientBalance());
+        require(to != address(0),Vault_ZeroAddress());
 
         balances[from][token] -= amount;
         balances[to][token] += amount

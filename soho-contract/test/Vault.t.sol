@@ -1,4 +1,4 @@
-//SPDX-License-Identifier:MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
 import "forge-std/Test.sol";
@@ -53,7 +53,7 @@ contract VaultTest is Test{
         vault.withdraw(address(token),50 ether);
 
         uint256 balance= vault.getBalance(user,address(token));
-        assert(balance,50eth,"balance should be 50 eth");
+        assert(balance,50 ether,"balance should be 50 eth");
             }
 
             function testWithdrawMoreThanBalanceshouldFail()public{
