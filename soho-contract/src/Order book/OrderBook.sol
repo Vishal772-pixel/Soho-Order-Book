@@ -8,7 +8,23 @@ interface IVault{
 }
 
 
-contract Orderbook is {
+contract Orderbook  {
+
+    //**Error//
+    error  OrderBook_ZeroVaultOrderBook();
+    error  OrderBook_FeeTooHigh();
+    error OrderBook_OnlyOwner();
+    error FeeBpsOnly10Percent();
+    error OrderBook_ZeroAddress();
+    error OrderBook_ZeroAmount();
+    error OrderBook_InvalidExpiry();
+    error OrderBook_InsufficientAmount();
+    error OrderBook_NotOwner();
+    error OrderBook_StatusNotActive();
+    error OrderBook_OrderStatusNotActive();
+    error OrderBook_TakerExpired();
+    error OrderBook_TakerEmpty();
+
 
     // Events
     event OrderCreated(uint256 indexed orderd, address indexed owner, address tokenIn, address tokenOut, uint256 tokenIn, uint256 tokenOut, uint256 expiry);
@@ -241,6 +257,93 @@ uint256 bal=vault.balances(msg.sender, tokenIn);
 
 
             if(maker.tokenIn*taker.tokenIn&&maker.tokenOut*taker.tokenOut){continue;}
+
+            //Computing Amount to Transfer
+            uint256 fillMakerIn=maker.remainingIn
+            uint256 fillMakerOut=maker.remainingOut
+
+        // candidate fill in maker.tokenIn (A)
+        uint256 makerCanSell=maker.remainingIn;
+        uint256 takerWants=taker.remainingOut;
+
+        uint256 fill A= makerCanSell<takerWants:makerCanSell:takerWants;
+        if(fillA==0){
+            continue;
+        }
+
+         // Corresponding taker input in B:
+            // maker.price = maker.amountOut / maker.amountIn (B per A)
+            // For fillA of A, taker must provide fillB = fillA * (maker.amountOut / maker.amountIn)
+            // compute carefully: fillB = (fillA * maker.amountOut) / maker.amountIn
+
+
+
+//
+
+uint256 fillB = (fillA * maker.amountOut) / maker.amountIn;
+            if (fillB == 0) { continue; }
+
+            // check taker has enough B available
+            if (fillB > taker.remainingIn) {
+                // reduce fillA proportionally so fillB fits taker.remainingIn
+                fillB = taker.remainingIn;
+                // recompute fillA = fillB * maker.amountIn / maker.amountOut
+                fillA = (fillB * maker.amountIn) / maker.amountOut;
+                if (fillA == 0) { continue; }
+            }
+
+            // final sanity checks
+            if (fillA > maker.remainingIn) fillA = maker.remainingIn;
+            uint256 requiredB = (fillA * maker.amountOut) / maker.amountIn;
+            if (requiredB > taker.remainingIn) {
+                // recalc if necessary
+                requiredB = taker.remainingIn;
+                fillA = (requiredB * maker.amountIn) / maker.amountOut;
+            }
+            uint256 fillMakerInFinal = fillA;          // A units moving maker -> taker
+            uint256 fillTakerInFinal = requiredB;      // B units moving taker -> maker
+
+            // compute fee on taker input (fee taken from taker input token)
+            uint256 fee = (fillTakerInFinal * feeBps) / 10000;
+            uint256 toMaker = fillTakerInFinal - fee;
+
+            // Check vault balances just in case
+            if (vault.balances(maker.owner, maker.tokenIn) < fillMakerInFinal) { continue; }
+            if (vault.balances(taker.owner, taker.tokenIn) < fillTakerInFinal) { continue; }
+
+            // perform transfers via vault
+            // maker.tokenIn (A) -> taker
+            vault._transferFromTo(maker.owner, taker.owner, maker.tokenIn, fillMakerInFinal);
+            // taker.tokenIn (B) -> maker (minus fee)
+            vault._transferFromTo(taker.owner, maker.owner, taker.tokenIn, toMaker);
+            // fee -> owner (protocol) (owner state variable)
+            if (fee > 0) {
+                vault._transferFromTo(taker.owner, owner, taker.tokenIn, fee);
+            }
+
+            // update remaining amounts
+            maker.remainingIn -= fillMakerInFinal;
+            maker.remainingOut = (maker.remainingIn * maker.amountOut) / maker.amountIn; // adjust proportional
+            taker.remainingIn -= fillTakerInFinal;
+            taker.remainingOut = (taker.remainingIn * taker.amountOut) / taker.amountIn;
+
+            emit OrderMatched(takerOrderId, mid, maker.owner, taker.owner, maker.tokenIn, maker.tokenOut, fillMakerInFinal, fillTakerInFinal, fee);
+
+            // mark maker filled if done
+            if (maker.remainingIn == 0) {
+                maker.status = OrderStatus.Filled;
+            }
+
+            // mark taker filled if done and break
+            if (taker.remainingIn == 0 || taker.remainingOut == 0) {
+                taker.status = OrderStatus.Filled;
+                break;
+            }
+        }
+
+        // if loop ends and taker has 0 remaining => status handled; otherwise still Active (partial fill)
+        if (taker.remainingIn == 0) taker.status = OrderStatus.Filled;
+    
 
 
     
