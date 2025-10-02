@@ -184,5 +184,76 @@ uint256 bal=vault.balances(msg.sender, tokenIn);
      * @param makerOrderIds Array of maker order ids to match against sequentially.
      */ 
 
-   function OrderMatched() external;
+   function matchOrder(uint256 takerOrderId, uint256 calldata[] makerOrdersIds) external{
+    Order storage taker = orders[takerOrderId];
+    if(taker.status!=OrderStatus.Active,OrderBook_OrderStatusNotActive());
+    if(taker.expiry<0||taker.expiry<=block.timestamp,OrderBook_TakerExpired());
+    if(taker.remainingIn<=0&&taker.remainingOut<=0,OrderBook_TakerEmpty());
+
+
+
+    for (uint256 i=0;i<makerIds.length&&taker.remainingIn>0,i++)}{
+        uint256 mid =makerOrderId[i];
+        Order storage maker=orders[mid];
+    }
+
+    //Skip Invalid Maker
+    if(maker.status!=Order.Active){
+        continue;
+    }
+    if(maker.expiry!=0 &&maker.expiry<=block.timestamp){
+        continue;
+    }
+
+            // tokens must mirror: maker.tokenIn == taker.tokenOut && maker.tokenOut == taker.tokenIn
+            if(!(maker.tokenIn==taker.tokenOut&&maker.tokenOut==taker.tokenIn)){
+        continue;
+            }
+
+  // compute matchable amount (in terms of maker.tokenIn and taker.tokenIn)
+            // We operate by tokenIn units of each order. To match proportionally by price
+            // we use remainingIn/remainingOut ratio. Simpler approach: treat amounts as exact pairwise.
+            //
+            // We'll compute how much of maker.tokenIn we can take, constrained by:
+            // - maker.remainingIn
+            // - taker.remainingOut * (maker.amountIn / maker.amountOut) ??? To avoid float math,
+            // we will convert via cross multiplication to figure makerBuyable = min(maker.remainingIn, taker.remainingOut * maker.amountIn / maker.amountOut)
+            //
+            // Safer approach: treat amounts as "maker sells A for B" and taker sells B for A. So
+            // maker.remainingIn is amount A available, maker.remainingOut is amount B expected.
+            // taker.remainingIn is amount B available, taker.remainingOut is amount A expected.
+            //
+            // So the maximum makerIn we can take is min(maker.remainingIn, taker.remainingOut)
+            // because taker.remainingOut is amount of A taker wants to receive.
+            //
+            // Similarly the maximum takerIn we can take is min(taker.remainingIn, maker.remainingOut).
+            //
+            // We'll match `filledA = min(maker.remainingIn, taker.remainingOut)` (A = maker.tokenIn)
+            // and `filledB = min(taker.remainingIn, maker.remainingOut)` (B = maker.tokenOut).
+            //
+            // The actual fill must satisfy price; to keep consistency we take the minimum equivalent
+            // by cross-checking proportionality using maker.amountIn/maker.amountOut ratio.
+            //
+            // For MVP we approximate by requiring exact price ratios in orders (i.e., maker.amountIn * taker.amountIn == maker.amountOut * taker.amountOut)
+            // and leave more complex price-crossing for advanced versions.
+
+            // Basic price-check (enforce exact ratio equality)
+
+
+            if(maker.tokenIn*taker.tokenIn&&maker.tokenOut*taker.tokenOut){continue;}
+
+
+    
+
+    /// -----------------------------
+    /// View helpers
+    /// -----------------------------
+    function getOrders(uint256 orderId) external view returns(order memory){
+        returns orders[orderId];
+
+    }
 }
+
+
+
+    
