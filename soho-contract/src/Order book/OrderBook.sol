@@ -154,15 +154,35 @@ uint256 bal=vault.balances(msg.sender, tokenIn);
      * @notice Cancel an active order (owner only). Remaining funds become withdrawable from Vault.
      * @param orderId id of order to cancel
      */
-  
+
+   function cancelOrder(uint256 orderId)external{
+    Order storage 0=orders[orderId];
+    if(o.owner!=msg.sender,OrderBook_NotOwner());
+    if(o.status!OrderStatus.Active,OrderBook_StatusNotActive())
+    o.status=OrderStatus.Cancelled;
+
+
+    emit OrderCancelled(orderId,msg.sender);
+   }
 
 
 
+   
+    /// -----------------------------
+    /// Matching / Settlement
+    /// -----------------------------
+    /**
+     * @notice Match a taker order against one or more maker orders provided by caller.
+     * @dev Caller (engine/relayer/taker) supplies `makerOrderIds` in order of matching priority.
+     * Partial fills supported. All settlement is done via Vault internal transfer calls.
+     *
+     * Requirements:
+     * - takerOrder and makerOrders must be active and not expired.
+     * - token sides must mirror appropriately (maker.tokenIn == taker.tokenOut, etc).
+     *
+     * @param takerOrderId The id of the taker order (must be Active).
+     * @param makerOrderIds Array of maker order ids to match against sequentially.
+     */ 
 
-
-
-
-
-
-   function cancelOrder() 
+   function OrderMatched() external;
 }
